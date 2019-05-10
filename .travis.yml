@@ -6,6 +6,8 @@ python:
   - "3.7"
 install:
   - pip install -r requirements.txt
+build:
+  - c++ -o main -O3 main.cpp
 script:
   - ./test.py 100 16 100 10
   - ./test.py 100 16 1000 10
