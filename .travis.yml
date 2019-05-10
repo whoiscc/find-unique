@@ -7,4 +7,8 @@ python:
 install:
   - pip install -r requirements.txt
 script:
-  - ./test.py 2000 320 10
+  - ./test.py 100 16 100 10
+  - ./test.py 100 16 1000 10
+  - ./test.py 100 16 10000 10
+  - ./test.py 100 16 120000 10
+  - ./test.py 100 16 200000 10
