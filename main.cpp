@@ -154,6 +154,10 @@ struct WordTree {
       result[buf_index + 1] = '\0';
       // cout << min_position << " " << result << endl;
     }
+
+    // iterate the tree in depth first fashion
+    // dfs and bfs should be equal here, but since this should be a wide tree,
+    // dfs would save some stack space
     size_t next_layer = nodes[current_node].next_layer;
     if (next_layer != NOT_APPLICABLE) {
       min_position = find_first_unique_impl(

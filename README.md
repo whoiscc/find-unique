@@ -92,4 +92,5 @@ The test running on CI is in this size for saving time.
 
 * Multithreading support.
 * Checking for evil input text. Currently the code in `main` assumes words are not ridiculously long.
-* More reality tests.
+* More reality tests input text.
+* Verify the upper bound of used memory does not exceed limitation indeed.
