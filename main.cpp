@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
+#include <cstring>
 
 using namespace std;
 
@@ -11,6 +12,9 @@ const size_t DUPLICATED = SIZE_MAX;
 const size_t NO_OCCURRENCE = SIZE_MAX - 1;
 
 const size_t NOT_APPLICABLE = SIZE_MAX;
+
+// assume memory block size is 4KB
+const size_t BLOCK_SIZE = 4 << 10;
 
 struct LetterNode {
   char letter;
@@ -115,6 +119,7 @@ struct WordTree {
     size_t position = nodes[node_index].position;
     if (position == NO_OCCURRENCE) {
       nodes[node_index].position = seq;
+      // printf("%.*s %zu\n", int(len), word, seq);
       seq += 1;
     } else {
       // no matter it was unique or duplicated already
@@ -132,14 +137,21 @@ struct WordTree {
     char *result, size_t len, char *buf, size_t buf_index, size_t current_node,
     size_t min_position
   ) {
+    // plus 1 for '\0' in result
+    if (buf_index + 1 >= len) {
+      // TODO: dedicated exception
+      throw OutOfMemoryException();
+    }
     // `buf[:buf_index + 1]` always equals to the word represented by current
     // node
     buf[buf_index] = nodes[current_node].letter;
+    // printf("%.*s\n", int(buf_index + 1), buf);
     size_t position = nodes[current_node].position;
     if (position < min_position) {
       min_position = position;
       strncpy(result, buf, buf_index + 1);
       result[buf_index + 1] = '\0';
+      // cout << min_position << " " << result << endl;
     }
     size_t next_layer = nodes[current_node].next_layer;
     if (next_layer != NOT_APPLICABLE) {
@@ -157,12 +169,126 @@ struct WordTree {
   }
 };
 
-size_t next_word(char *buffer, size_t len, size_t begin) {
-  size_t i;
-  for (i = begin; i < len && buffer[i] != ' '; i += 1)
-    ;
-  return i;
-}
+
+
+struct Reader {
+  char *buffer;
+  size_t buffer_len;
+  // the word splited by block reading
+  char *half_word;
+  size_t half_word_len;
+  char *joined_word;
+  // buffer[cursor:] is not covered by `tree` yet
+  size_t cursor;
+  size_t memory_limit;
+  WordTree &tree;
+
+  Reader(WordTree &word_tree, size_t memory_limit)
+    : tree(word_tree), memory_limit(memory_limit), buffer_len(0), cursor(0),
+      joined_word(nullptr) {}
+
+  // discard current buffer, read the next part of input into buffer with proper
+  // size
+  // half_word should be copied out of current buffer before calling
+  void read_block() {
+    size_t tree_node_count = tree.next_available;
+    size_t tree_size = tree_node_count * sizeof(WordTree);
+    if (tree_size != 0) {
+      tree_size = ((tree_size - 1) / BLOCK_SIZE + 1) * BLOCK_SIZE;
+    }
+    // TODO: check for very long half_word
+    if (memory_limit <= tree_size) {
+      throw OutOfMemoryException();
+    }
+    size_t next_buffer_len = (memory_limit - tree_size) / INPUT_RATIO;
+    if (next_buffer_len == 0) {
+      throw OutOfMemoryException();
+    }
+
+    if (buffer_len != 0) {
+      delete[] buffer;
+    }
+    buffer = new char[next_buffer_len];
+    buffer_len = fread(buffer, sizeof(char), next_buffer_len, stdin);
+    // end of input, cleanup
+    if (buffer_len == 0) {
+      delete[] buffer;
+    }
+    cursor = 0;
+  }
+
+  bool next_word(char **out_word, size_t *out_word_len) {
+    // free used joined_word
+    if (joined_word != nullptr) {
+      delete[] joined_word;
+    }
+
+    for (; cursor < buffer_len && buffer[cursor] == ' '; cursor += 1)
+      ;
+    size_t word_len;
+    for (
+      word_len = 0;
+      cursor + word_len < buffer_len && buffer[cursor + word_len] != ' ';
+      word_len += 1
+    )
+      ;
+
+    if (cursor + word_len < buffer_len) {
+      // current buffer is not exhuasted
+      // word_len must > 0, because buffer[cursor + word_len] == ' '
+      // and cursor < buffer_len (or this condition will not hold) so
+      // buffer[cursor] != ' ', so buffer[cursor] != buffer[cursor + word_len]
+      *out_word = buffer + cursor;
+      *out_word_len = word_len;
+      cursor += word_len;
+      return true;
+    } else {
+      // current buffer is exhuasted, we need another read
+      // cout << "buffer exhuasted" << endl;
+      half_word_len = word_len;
+      if (half_word_len != 0) {
+        half_word = new char[half_word_len];
+        strncpy(half_word, buffer + cursor, half_word_len);
+      }
+
+      read_block();
+      if (buffer_len == 0) {
+        // there's nothing to read, half_word (if exists) becomes the last word
+        if (half_word_len == 0) {
+          return false;
+        }
+        *out_word = half_word;
+        *out_word_len = half_word_len;
+        // TODO: refine the interface to notify caller "this is the last word"
+        // to reduce the last reading IO
+        return true;
+      }
+
+      // cover the rest part of the word
+      size_t rest_len;
+      for (rest_len = 0; rest_len < buffer_len && buffer[rest_len] != ' '; rest_len += 1)
+        ;
+      if (half_word_len == 0 && rest_len == 0) {
+        // whitespace on both sides, simple ignore them and try again
+        cursor = rest_len;
+        return next_word(out_word, out_word_len);
+      }
+      // TODO: check very long rest part
+      char *joined_word = new char[half_word_len + rest_len];
+      if (half_word_len != 0) {
+        strncpy(joined_word, half_word, half_word_len);
+        delete[] half_word;
+      }
+      strncpy(joined_word + half_word_len, buffer, rest_len);
+      // printf("joined: %.*s\n", int(half_word_len + rest_len), joined_word);
+      *out_word = joined_word;
+      *out_word_len = half_word_len + rest_len;
+      cursor = rest_len;
+      return true;
+    }
+  }
+};
+
 
 int main(int argc, char *argv[]) {
   size_t memory_limit;
@@ -172,21 +298,20 @@ int main(int argc, char *argv[]) {
     cerr << "please specify memory limit (in MB)" << endl;
     exit(1);
   }
+
   size_t nodes_size_limit = (memory_limit << 20) / sizeof(LetterNode);
   // cout << "nodes_size_limit: " << nodes_size_limit << endl;
   WordTree tree(nodes_size_limit);
+  Reader reader(tree, memory_limit << 20);
 
-  char buffer[128];
-  fread(buffer, sizeof(char), 128, stdin);
-  size_t begin = 0;
-  while (begin < 128) {
-    size_t end = next_word(buffer, 128, begin);
-    size_t node_index = tree.find_node_index(buffer + begin, end - begin);
-    tree.update_node(buffer + begin, end - begin);
-    begin = end + 1;
+  char *buf;
+  size_t buf_len;
+  while (reader.next_word(&buf, &buf_len)) {
+    tree.update_node(buf, buf_len);
   }
-  tree.find_first_unique(buffer, 128);
-  cout << buffer << endl;
+  char result[64];
+  tree.find_first_unique(result, sizeof(result) / sizeof(char));
+  cout << result << endl;
 
   return 0;
 }
