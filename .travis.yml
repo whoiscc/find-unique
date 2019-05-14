@@ -1,16 +1,7 @@
 #
 
-dist: xenial
 language: python
 python:
-  - "3.7"
+  - "3.6"
 install:
-  - pip install -r requirements.txt
-  # https://stackoverflow.com/questions/30472731/which-c-standard-header-defines-size-max
-  - c++ -std=c++11 -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -o main -O3 main.cpp
 script:
-  - ./test.py 100 16 100 10
-  - ./test.py 100 16 1000 10
-  - ./test.py 100 16 10000 10
-  - ./test.py 100 16 120000 10
-  - ./test.py 100 16 200000 10
