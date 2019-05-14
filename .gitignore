@@ -1,2 +1,4 @@
 .venv/
-main
+config.py
+*.txt
+__pycache__/

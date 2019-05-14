@@ -1,0 +1,9 @@
+#
+
+TEXT_LENGTH = 100 << 20  # 100MiB
+# word length = uniform random in [LEN - HALF_RANGE, LEN + HALF_RANGE)
+AVER_WORD_LENGTH = 5
+WORD_LENGTH_HALF_RANGE = 3
+UNIQUE_WORD_COUNT = 10
+
+MEMORY_LIMIT = 16 << 20  # 16MiB
