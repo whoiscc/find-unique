@@ -1,10 +1,12 @@
 #
 
 class BlockManager:
-    def __init__(self, file, block_size):
+    def __init__(self, file, block_size, cache_dir):
         self.input = file
         self.block_size = block_size
         self.unread_index = 0
+        self.cache_dir = cache_dir
+        self.cache_dir.mkdir(exist_ok=True)
 
         self.io_count = 0
 
@@ -17,19 +19,23 @@ class BlockManager:
         if block_index == self.unread_index:
             block = self.read_block()
             self.io_count += 1
-            with open(f'block-{self.unread_index}.txt', 'w') as block_file:
+            with open(
+                self.cache_dir / f'block-{self.unread_index}.txt', 'w'
+            ) as block_file:
                 block_file.write(block)
             self.unread_index += 1
         else:
             self.io_count += 1
-            with open(f'block-{block_index}.txt') as block_file:
+            with open(
+                self.cache_dir / f'block-{block_index}.txt'
+            ) as block_file:
                 block = block_file.read()
         return block
 
 
 class LRUBlockManager(BlockManager):
-    def __init__(self, file, block_size, cached_block_count):
-        super().__init__(file, block_size)
+    def __init__(self, file, block_size, cached_block_count, cache_dir):
+        super().__init__(file, block_size, cache_dir)
         self.block_count = cached_block_count
         self.blocks = {}
         self.last_used = {}

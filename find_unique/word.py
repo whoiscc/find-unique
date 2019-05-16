@@ -40,6 +40,52 @@ class Word:
             index_b += 1
             if index_a == len(block_a):
                 block_a = next(iter_a)
+                index_a = 0
             if index_b == len(block_b):
                 block_b = next(iter_b)
+                index_b = 0
         return True
+
+
+def iter_words(block_manager, begin_index=0):
+    full_block_size = block_manager.block_size
+    def iter_blocks():
+        index = begin_index // full_block_size
+        while True:
+            block = block_manager.get_block(index)
+            if block == '':
+                return
+            else:
+                yield block
+                index += 1
+
+    global_index = begin_index
+    local_index = begin_index % full_block_size
+    blocks = iter_blocks()
+    block = next(blocks)
+    block_len = len(block)
+    # iteration per word
+    while True:
+        def find_next(space=True):
+            nonlocal local_index, global_index, block, block_len
+            while block[local_index].isspace() != space:
+                local_index += 1
+                global_index += 1
+                if local_index == block_len:
+                    block = next(blocks)
+                    block_len = len(block)
+                    local_index = 0
+
+        try:
+            find_next(space=False)
+        except StopIteration:
+            return
+        word_start = global_index
+
+        try:
+            find_next(space=True)
+        except StopIteration:
+            pass
+        word_end = global_index
+
+        yield Word(block_manager, word_start, word_end - word_start)
