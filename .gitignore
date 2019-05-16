@@ -1,4 +1,5 @@
 .venv/
-config.py
 *.txt
 __pycache__/
+.DS_Store
+temp/

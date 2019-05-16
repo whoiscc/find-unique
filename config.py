@@ -1,0 +1,15 @@
+#
+
+TEXT_LEN = 100 << 10
+AVER_WORD_LEN = 1 << 9
+WORD_LEN_HALF_RANGE = 3
+UNIQUE_WORD_COUNT = 10
+WORD_SEP = '\n'
+
+BLOCK_SIZE = 4 << 10
+CACHED_BLOCK_COUNT = 4
+WINDOW_SIZE = max((CACHED_BLOCK_COUNT - 1) * BLOCK_SIZE // AVER_WORD_LEN, 1)
+
+from pathlib import Path
+
+CACHE_DIR = Path('temp')
