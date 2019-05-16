@@ -38,3 +38,4 @@ The first line is the standard error of `gen.py`, and the last line is the stand
 * Add unit test to `BlockManager` and `Word`
 * Variable block size to fix word boundary when possible
 * More efficient way to compare words
+* Find the best configure according to input automatically
