@@ -4,5 +4,7 @@ dist: xenial
 language: python
 python:
   - "3.7"
+install:
+  - pip install numpy
 script:
-  - echo "placeholder"
+  - ./test.sh

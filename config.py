@@ -8,7 +8,7 @@ WORD_SEP = '\n'
 
 BLOCK_SIZE = 4 << 10
 CACHED_BLOCK_COUNT = 4
-WORD_LIST_LEN = 1 << 10
+WINDOW_SIZE = max((CACHED_BLOCK_COUNT - 1) * BLOCK_SIZE // AVER_WORD_LEN, 1)
 
 from pathlib import Path
 
