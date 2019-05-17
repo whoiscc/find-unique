@@ -4,7 +4,7 @@ language: python
 python:
   - "3.6"
 install:
-  - pip install numpy
+  - pip install -U pytest numpy
 script:
   - pytest
   - ./test.sh
