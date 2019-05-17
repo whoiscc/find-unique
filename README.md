@@ -35,7 +35,8 @@ The first line is the standard error of `gen.py`, and the last line is the stand
 
 * Limit the memory explicitly
 * Exploit more spatial locality addition to word window
-* Add unit test to `BlockManager` and `Word`
+* Add unit test to ~~`BlockManager`~~ and `Word`
 * Variable block size to fix word boundary when possible
 * More efficient way to compare words
 * Find the best configure according to input automatically
+* Add a new subclass of `BlockManager`, which supports skipping unread blocks

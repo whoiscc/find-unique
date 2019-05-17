@@ -6,4 +6,5 @@ python:
 install:
   - pip install numpy
 script:
+  - pytest
   - ./test.sh
