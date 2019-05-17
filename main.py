@@ -23,6 +23,7 @@ def main():
             continue
         # print('window full')
 
+        # TODO: compare more words from `rest_word` in one batch
         for rest_word in iter_words(bm, word.offset + word.length + 1):
             for window_index, window_word in enumerate(word_window):
                 if possible_unique[window_index] and window_word == rest_word:
